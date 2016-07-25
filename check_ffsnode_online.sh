@@ -4,8 +4,10 @@
 # Version 0.8
 # Dieses Skript liest über eine JSON Datei des Freifunk Stuttgart den Zeitpunkt des letzten Kontakts jeder Node aus. Ist diese älter als die für WARNING oder CRITICAL übergebenen Schwellenwerte, so wird ungleich 0 zurückgegeben.
 # Passend zu NAGIOS steht EXIT-Code 0 für OK, 1 für WARNING, 2 für CRITICAL.
+# Wenn die erste URL nicht zu funktionieren scheint, dann verwende die 2. URL
 
-JSONURL=http://hg.albi.info/json/nodes.json
+JSONURL1=http://hg.albi.info/json/nodes.json
+JSONURL2=http://karte.freifunk-stuttgart.de/json/nodesdb.json
 
 # Diese Datei muss für den Monitoring-User schreibbar sein
 TMPFILE=/tmp/freifunk_json_extract.txt
@@ -54,19 +56,45 @@ fi
 if [ -s $TMPFILE ]; then
 	AGE=$(( (`date +%s` - `stat -L --format %Y $TMPFILE`) ))	
 else
-	echo "DEBUG: Die Datei $TMPFILE existiert nicht oder ist leer. Setze AGE auf 9999s damit die Datei neu erstelle wird" 
+	#echo "DEBUG: Die Datei $TMPFILE existiert nicht oder ist leer. Setze AGE auf 9999s damit die Datei neu erstelle wird" 
 	AGE=9999
 fi
 
 #echo "DEBUG: Datei $TMPFILE hat ein Alter von $AGE Sekunden."
 
 if [ $AGE -gt 333 ]; then
-	#echo "DEBUG: Aelter als 333s. Hole neu $JSONURL ..."
-	curl -s $JSONURL -H 'User-Agent: Tuebingen Freifunk Monitoring' -H 'Accept-Encoding: gzip, deflate' -H 'DNT: 1' | gunzip | sed s/},{\"nodeinfo\"/},\\n{\"nodeinfo\"/g | sed -r 's/^.*hostname.:.(.*).,.hardware.*lastseen.:.(2.*).,.first.*$/\1\t\2/g' > $TMPFILE.$NODENAME
+	rm -f $TMPFILE $TMPFILE.$NODENAME
+	#echo "DEBUG: Aelter als 333s. Hole neu $JSONURL1 ..."
+	curl -f -s $JSONURL1 -H 'User-Agent: Tuebingen Freifunk Monitoring' | sed s/},{\"nodeinfo\"/},\\n{\"nodeinfo\"/g | sed -r 's/^.*hostname.:.(.*).,.hardware.*lastseen.:.(2.*).,.first.*$/\1\t\2/g' > $TMPFILE.$NODENAME
 
-	if [ $? -ne 0 ]; then
-		echo "WARNING: $JSONURL ist down oder andere Probleme beim Abruf"
-		exit 1;
+	ERROR=0
+	if [ $? -ne 0 ] ; then
+		echo "WARNING: curl auf $JSONURL1 liefert EXITCODE ungleich 0"
+		ERROR=1
+	fi
+
+	if [ ! -e $TMPFILE.$NODENAME ] ; then
+		echo "WARNING: $TMPFILE.$NODENAME existiert nicht"
+		ERROR=2
+	fi
+
+	if [ ! -s $TMPFILE.$NODENAME ] ; then
+		echo "WARNING: $TMPFILE.$NODENAME hat SIZE=0"
+		ERROR=3
+	fi
+
+	if [ $ERROR -ne 0 ] ; then
+		rm -f $TMPFILE $TMPFILE.$NODENAME
+		echo "WARNING: $JSONURL1 ist down oder andere Probleme beim Abruf. Probiere über $JSONURL2"
+
+    	curl -f -s $JSONURL2 -H 'User-Agent: Tuebingen Freifunk Monitoring' | sed s/\"hostname\"/\\n\"hostname\"/g | sed -r 's/^.*hostname.:.([^\"]*)..*.last_online.:(1[0-9]*),.*$/\1\t\2/g' > $TMPFILE.$NODENAME
+
+    	# Bei der Fallback-URL wird aktuell nicht so genau getestet, ob das fehlschlug
+	    if [ $? -ne 0 ]; then
+	      echo "WARNING: $JSONURL2 ist auch down oder andere Probleme beim Abruf! Giveup!"
+	      exit -1
+	    fi
+
 	fi
 
 	mv $TMPFILE.$NODENAME $TMPFILE
@@ -86,10 +114,15 @@ then
    exit 2;
 fi
 
-# Zeitpunkt JETZT in Sekunden seit Epochenbeginn
+# Zeitpunkt JETZT in Sekunden seit Epochenbeginn.
 NOW=`date +'%s'`
-# Zeitpunkt LASTSEEN der Node in Sekunden seit Epochenbeginn
+
+# Zeitpunkt LASTSEEN der Node in Sekunden seit Epochenbeginn. Das klappt nur bei JSONURL1...
 LS=`date -d ${LSDATE} +'%s'`
+if [ $? -ne 0 ]; then
+	 #echo "WARNING: ${LSDATE} scheint kein Datum zu sein. Das ist bei $JSONURL2 der Fall. Mache weiter und erwarte Sekunden seit EPOCHE"
+	 LS=${LSDATE}
+fi
 
 # Wieviele Sekunden/Minuten/Stunden ist LASTSEEN her?
 DIFF=`expr $NOW - $LS`

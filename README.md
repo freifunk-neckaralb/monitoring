@@ -1,5 +1,5 @@
 # monitoring
-Ein Skript um Freifunk-Stuttgart Nodes mit Nagios zu überwachen. Kann auch mit anderen Monitordiensten verwendet werden.
+Ein Skript um Freifunk-Stuttgart Nodes mit Nagios zu überwachen. Kann auch mit anderen Monitordiensten verwendet werden. Das Skript arbeitet über http://hg.albi.info/json/nodes.json und - falls erstere nicht zu erreichen ist - mit http://karte.freifunk-stuttgart.de/json/nodesdb.json
 
 Für Nagios besteht die Konfiguration aus:
 
