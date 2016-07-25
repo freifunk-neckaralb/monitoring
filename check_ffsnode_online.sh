@@ -9,7 +9,7 @@
 JSONURL1=http://hg.albi.info/json/nodes.json
 JSONURL2=http://karte.freifunk-stuttgart.de/json/nodesdb.json
 
-# Diese Datei muss für den Monitoring-User schreibbar sein
+# Diese Datei (und weitere Dateien in dem Verzeichnis) müssen für den Monitoring-User schreibbar sein
 TMPFILE=/tmp/freifunk_json_extract.txt
 
 warningMinutes=90
