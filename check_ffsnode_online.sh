@@ -119,7 +119,7 @@ NOW=`date +'%s'`
 
 # Zeitpunkt LASTSEEN der Node in Sekunden seit Epochenbeginn. Das klappt nur bei JSONURL1...
 LS=`date -d ${LSDATE} +'%s'`
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 ] || [ $LS -lt 1451656367 ] || [ $LS -gt 1577886767 ]; then
 	 #echo "WARNING: ${LSDATE} scheint kein Datum zu sein. Das ist bei $JSONURL2 der Fall. Mache weiter und erwarte Sekunden seit EPOCHE"
 	 LS=${LSDATE}
 fi
