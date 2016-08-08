@@ -129,6 +129,12 @@ DIFF=`expr $NOW - $LS`
 DIFFM=`expr $DIFF / 60`
 DIFFH=`expr $DIFF / 60 / 60`
 
+# Nochmal checken, ob 'date' vielleicht ein Datum aus der Sekundenangabe der Fallback-URL gemacht hat....
+if [ $DIFFM -lt 0 ]; then
+	 #echo "WARNING: ${LSDATE} scheint kein Datum zu sein. Das ist bei $JSONURL2 der Fall. Mache weiter und erwarte Sekunden seit EPOCHE"
+	 LS=${LSDATE}
+fi
+
 if [ "$DIFFM" -ge "$criticalMinutes" ]
 then
    echo "CRITICAL: $NODENAME seit $DIFFH h offline, lastseen $LSDATE"
