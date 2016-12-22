@@ -7,7 +7,8 @@
 # Wenn die erste URL nicht zu funktionieren scheint, dann verwende die 2. URL
 
 JSONURL1=http://hg.albi.info/json/nodes.json
-JSONURL2=http://karte.freifunk-stuttgart.de/json/nodesdb.json
+JSONURL2=http://netinfo.freifunk-stuttgart.de/json/nodesdb.json
+# Alt, geht 12'2016 nicht mehr: http://karte.freifunk-stuttgart.de/json/nodesdb.json
 
 # Diese Datei (und weitere Dateien in dem Verzeichnis) müssen für den Monitoring-User schreibbar sein
 TMPFILE=/tmp/freifunk_json_extract.txt
